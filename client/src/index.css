@@ -1,0 +1,266 @@
+:root {
+  --text: #4b5563; /* Cool gray-600 */
+  --text-h: #111827; /* Dark gray-900 */
+  --bg: #f9fafb; /* Premium soft off-white background */
+  --card-bg: #ffffff; /* Clean white cards */
+  --border: #e5e7eb; /* Soft border */
+  --code-bg: #f3f4f6;
+  --accent: #10b981; /* Premium Emerald 600 */
+  --accent-bg: rgba(16, 185, 129, 0.05);
+  --accent-border: rgba(16, 185, 129, 0.2);
+  --social-bg: rgba(243, 244, 246, 0.5);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+
+  --sans: 'Outfit', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Outfit', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 16px/150% var(--sans);
+  letter-spacing: 0.15px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark Mode Theme Definition */
+[data-theme='dark'] {
+  --text: #9ca3af;
+  --text-h: #f9fafb;
+  --bg: #0b0f19; /* Sleek dark blue/charcoal background */
+  --card-bg: #111827; /* Deep gray cards */
+  --border: #1f2937; /* Dark gray border */
+  --code-bg: #1f2937;
+  --accent: #10b981; /* Keep Emerald */
+  --accent-bg: rgba(16, 185, 129, 0.08);
+  --accent-border: rgba(16, 185, 129, 0.25);
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#root {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  border-inline: 1px solid var(--border);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background-color: var(--bg);
+}
+
+@media (max-width: 1126px) {
+  #root {
+    border-inline: none;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--heading);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+p {
+  margin: 0;
+}
+
+/* --- Layout Component Styling --- */
+.main-content {
+  padding-top: 24px;
+  padding-bottom: 40px;
+}
+
+@media (max-width: 767.98px) {
+  .main-content {
+    padding-bottom: 100px; /* Safe padding for mobile bottom bar */
+  }
+}
+
+/* --- Premium Minimalist Card Overrides --- */
+.card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow) !important;
+  transition: all 0.2s ease;
+}
+
+[data-theme='dark'] .card,
+[data-theme='dark'] .list-group-item {
+  background-color: var(--card-bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme='dark'] .card-header,
+[data-theme='dark'] .card-footer {
+  background-color: #1f2937 !important;
+  border-color: var(--border) !important;
+}
+
+/* --- Table Styling --- */
+.table {
+  background-color: var(--card-bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.table th {
+  background-color: var(--code-bg) !important;
+  color: var(--text-h) !important;
+  border-color: var(--border) !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme='dark'] .table th {
+  background-color: #1f2937 !important;
+  color: var(--text-h) !important;
+}
+
+/* --- Inputs and Controls --- */
+.form-control,
+.form-select {
+  background-color: var(--card-bg) !important;
+  color: var(--text-h) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 0.18rem var(--accent-bg) !important;
+}
+
+[data-theme='dark'] input::placeholder {
+  color: #4b5563 !important;
+}
+
+/* --- Success Button Overrides --- */
+.bg-success {
+  background-color: var(--accent) !important;
+}
+
+.btn-success {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  border-radius: 8px !important;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active {
+  background-color: #047857 !important;
+  border-color: #047857 !important;
+}
+
+.btn-outline-success {
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  border-radius: 8px !important;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-outline-success:hover,
+.btn-outline-success:focus,
+.btn-outline-success:active {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.text-success {
+  color: var(--accent) !important;
+}
+
+/* --- Toast styling --- */
+.custom-toast {
+  position: fixed;
+  bottom: 24px !important; /* Default desktop position */
+  right: 24px;
+  z-index: 1080;
+  min-width: 280px;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (max-width: 767.98px) {
+  .custom-toast {
+    bottom: 84px !important; /* Mobile bottom position to stay clear of bottom-nav */
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* --- Navigation Active Styles --- */
+.navbar .nav-link {
+  transition: color 0.15s ease;
+}
+
+.navbar .nav-link:hover {
+  color: #ffffff !important;
+}
+
+/* --- Dark Mode Utility Overrides --- */
+[data-theme='dark'] .text-dark {
+  color: var(--text-h) !important;
+}
+
+[data-theme='dark'] .list-group-item-action:hover {
+  background-color: #1f2937 !important;
+  color: var(--text-h) !important;
+}
+
+/* Custom Login Card Input Styles (fixes white box, borders and outlines) */
+.login-card .form-control {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.login-card .input-group-text {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Override autocomplete background */
+.login-card .form-control:-webkit-autofill,
+.login-card .form-control:-webkit-autofill:hover, 
+.login-card .form-control:-webkit-autofill:focus, 
+.login-card .form-control:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0e2013 inset !important; /* Dark green/black overlay matching gradient */
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

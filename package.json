@@ -1,0 +1,14 @@
+{
+  "name": "vendorbb-project",
+  "version": "1.0.0",
+  "description": "VendorBB - Root Project Runner",
+  "scripts": {
+    "install-all": "npm install --prefix client && npm install --prefix server",
+    "server": "npm start --prefix server",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
