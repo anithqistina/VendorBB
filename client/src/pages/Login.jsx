@@ -163,12 +163,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          <div className="mt-4 text-center">
-            <small className="text-white-50">
-              Default: <code className="text-white" style={{ background: "rgba(255,255,255,0.1)" }}>admin</code> / <code className="text-white" style={{ background: "rgba(255,255,255,0.1)" }}>admin123</code>
-            </small>
-          </div>
         </div>
       </div>
 

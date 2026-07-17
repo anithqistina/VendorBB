@@ -126,16 +126,17 @@ function initDb() {
         role TEXT DEFAULT 'admin'
       )
     `, () => {
-      dbConn.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
-        if (row && row.count === 0) {
-          const hashedPassword = bcrypt.hashSync("admin123", 10);
-          dbConn.run(
-            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-            ["admin", hashedPassword, "admin"]
-          );
-          console.log("👥 Default admin user seeded: admin / admin123");
-        }
-      });
+      const hashedPassword = bcrypt.hashSync("admin123", 10);
+      dbConn.run("DELETE FROM users WHERE username NOT IN ('bblotus', 'bbtunjung')");
+      dbConn.run(
+        "INSERT OR REPLACE INTO users (username, password, role) VALUES (?, ?, ?)",
+        ["bblotus", hashedPassword, "admin"]
+      );
+      dbConn.run(
+        "INSERT OR REPLACE INTO users (username, password, role) VALUES (?, ?, ?)",
+        ["bbtunjung", hashedPassword, "admin"]
+      );
+      console.log("👥 Default admin users seeded/verified: bblotus/admin123 and bbtunjung/admin123");
     });
 
     // 7. Settings
