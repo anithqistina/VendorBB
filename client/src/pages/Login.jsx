@@ -28,7 +28,11 @@ export default function Login() {
       navigate("/");
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Invalid username or password");
+      if (err.code === "ERR_NETWORK" || !err.response) {
+        setError("Cannot connect to the backend server. Please check if the server is running.");
+      } else {
+        setError(err.response?.data?.message || "Invalid username or password");
+      }
     } finally {
       setLoading(false);
     }
