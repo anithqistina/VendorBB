@@ -3,7 +3,10 @@ import { showToast } from "./toast";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  timeout: 120000, // 2 minutes to allow Render free tier backend to spin up
 });
+
+console.log("🔌 Connected to API Base URL:", api.defaults.baseURL);
 
 api.interceptors.request.use(
   (config) => {
@@ -22,8 +25,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (!error.response || error.code === "ERR_NETWORK") {
-      showToast("Cannot connect to the backend server! Please ensure the server is running on port 5000.", "error", "Connection Error");
+    if (!error.response || error.code === "ERR_NETWORK" || error.code === "ECONNABORTED") {
+      const url = api.defaults.baseURL;
+      showToast(`Cannot connect to the backend server at ${url}! Please ensure the backend server is running and accessible.`, "error", "Connection Error");
     } else if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       localStorage.removeItem("vendorbb_token");
       localStorage.removeItem("vendorbb_user");

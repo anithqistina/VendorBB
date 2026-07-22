@@ -28,8 +28,8 @@ export default function Login() {
       navigate("/");
     } catch (err) {
       console.error(err);
-      if (err.code === "ERR_NETWORK" || !err.response) {
-        setError("Cannot connect to the backend server. Please check if the server is running.");
+      if (err.code === "ERR_NETWORK" || err.code === "ECONNABORTED" || !err.response) {
+        setError(`Cannot connect to the backend server at "${api.defaults.baseURL}". Please ensure the backend is running and configured correctly.`);
       } else {
         setError(err.response?.data?.message || "Invalid username or password");
       }
