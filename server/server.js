@@ -41,6 +41,15 @@ app.use("/api/auth", authRoutes);
 
 // Public Database Debug route
 app.get("/api/debug-db", (req, res) => {
+  const initErr = db.getInitError();
+  if (initErr) {
+    return res.status(500).json({
+      message: "Database initialization failed during startup!",
+      error: initErr.message,
+      stack: initErr.stack
+    });
+  }
+
   db.query("SELECT id, username, role FROM users", (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message, stack: err.stack });

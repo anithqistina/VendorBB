@@ -13,6 +13,7 @@ const pool = mysql.createPool({
   ssl: process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false }
 });
 let initDbPromise = null;
+let initError = null;
 
 const db = {
   query: function (sql, params, callback) {
@@ -46,6 +47,10 @@ const db = {
       initDbPromise = initDb();
     }
     return initDbPromise;
+  },
+
+  getInitError: function () {
+    return initError;
   }
 };
 
@@ -179,6 +184,7 @@ Thank you ❤️` }
     console.log("⚙️ Default settings seeded");
     console.log("✅ MySQL Connected and Initialized Successfully");
   } catch (err) {
+    initError = err;
     console.error("❌ MySQL Initialization Error:", err.message);
   }
 }
