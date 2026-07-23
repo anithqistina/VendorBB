@@ -41,7 +41,7 @@ exports.getStats = (req, res) => {
             const monthlySql = `
               SELECT SUM(total_payment) AS paid_total 
               FROM payments 
-              WHERE strftime('%Y-%m', paid_date) = strftime('%Y-%m', 'now')
+              WHERE DATE_FORMAT(paid_date, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')
             `;
             db.query(monthlySql, (err, monthlyResult) => {
               if (err) return res.status(500).json(err);
@@ -78,7 +78,7 @@ exports.getCharts = (req, res) => {
 
     // Monthly spending: Group by month
     const monthlySql = `
-      SELECT strftime('%Y-%m', paid_date) AS month, SUM(total_payment) AS amount 
+      SELECT DATE_FORMAT(paid_date, '%Y-%m') AS month, SUM(total_payment) AS amount 
       FROM payments 
       GROUP BY month 
       ORDER BY month DESC 

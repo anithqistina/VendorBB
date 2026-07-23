@@ -78,12 +78,12 @@ exports.getMonthlyReport = (req, res) => {
       v.bank_name,
       v.account_number,
       SUM(di.payment) AS total_revenue,
-      (SELECT SUM(total_payment) FROM payments WHERE vendor_id = v.id AND strftime('%Y-%m', paid_date) = ?) AS total_paid
+      (SELECT SUM(total_payment) FROM payments WHERE vendor_id = v.id AND DATE_FORMAT(paid_date, '%Y-%m') = ?) AS total_paid
     FROM delivery_items di
     JOIN deliveries d ON di.delivery_id = d.id
     JOIN foods f ON di.food_id = f.id
     JOIN vendors v ON d.vendor_id = v.id
-    WHERE strftime('%Y-%m', d.delivery_date) = ?
+    WHERE DATE_FORMAT(d.delivery_date, '%Y-%m') = ?
     GROUP BY v.id, v.vendor_name, v.bank_name, v.account_number
     ORDER BY v.vendor_name ASC
   `;
