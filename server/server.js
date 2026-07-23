@@ -39,6 +39,26 @@ app.use((req, res, next) => {
 // Public Auth routes
 app.use("/api/auth", authRoutes);
 
+// Public Database Debug route
+app.get("/api/debug-db", (req, res) => {
+  db.query("SELECT id, username, role FROM users", (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message, stack: err.stack });
+    }
+    res.json({
+      message: "Database connection and query successful!",
+      usersCount: results ? results.length : 0,
+      users: results,
+      env: {
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        database: process.env.DB_NAME,
+        port: process.env.DB_PORT
+      }
+    });
+  });
+});
+
 // Protected app routes
 app.use(authMiddleware);
 app.use("/api/vendors", vendorRoutes);
