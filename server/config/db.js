@@ -12,6 +12,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
   ssl: process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false }
 });
+let initDbPromise = null;
 
 const db = {
   query: function (sql, params, callback) {
@@ -38,6 +39,13 @@ const db = {
 
   serialize: function (callback) {
     if (callback) callback();
+  },
+
+  initPromise: function () {
+    if (!initDbPromise) {
+      initDbPromise = initDb();
+    }
+    return initDbPromise;
   }
 };
 
@@ -175,6 +183,6 @@ Thank you ❤️` }
   }
 }
 
-initDb();
+db.initPromise();
 
 module.exports = db;

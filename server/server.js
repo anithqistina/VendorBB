@@ -12,12 +12,23 @@ const settingsRoutes = require("./routes/settingsRoutes");
 const authMiddleware = require("./middleware/auth");
 
 require("dotenv").config();
-require("./config/db");
+const db = require("./config/db");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Await database initialization on serverless function invoke
+app.use(async (req, res, next) => {
+  try {
+    await db.initPromise();
+    next();
+  } catch (err) {
+    console.error("❌ Database initialization error on request:", err);
+    res.status(500).json({ message: "Database initialization failed", error: err.message });
+  }
+});
 
 // Request logger middleware
 app.use((req, res, next) => {
