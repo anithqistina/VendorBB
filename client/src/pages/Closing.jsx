@@ -16,11 +16,18 @@ export default function Closing() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadVendors(); }, []);
+  // States for viewing/editing existing closing details
+  const [isClosed, setIsClosed] = useState(false);
+  const [existingDeliveryId, setExistingDeliveryId] = useState(null);
+  const [editDeliveryDate, setEditDeliveryDate] = useState("");
+
+  useEffect(() => {
+    loadVendors();
+  }, [deliveryDate]);
 
   const loadVendors = async () => {
     try {
-      const res = await api.get("/vendors");
+      const res = await api.get(`/deliveries/vendors?date=${deliveryDate}`);
       setVendors(res.data);
     } catch {
       showToast("Failed to load vendors list", "error");
@@ -41,13 +48,26 @@ export default function Closing() {
     setFoods([]);
     try {
       const res = await api.get(`/deliveries/today/${id}/${date}`);
-      const data = res.data.map(item => ({
-        ...item,
-        remaining: item.qty_remaining !== null && item.qty_remaining !== undefined
-          ? String(item.qty_remaining)
-          : "",
-      }));
-      setFoods(data);
+      if (res.data && res.data.length > 0) {
+        const isClosedFlag = res.data[0].is_closed === 1;
+        const deliveryId = res.data[0].delivery_id;
+
+        const data = res.data.map(item => ({
+          ...item,
+          remaining: isClosedFlag && item.qty_remaining !== null && item.qty_remaining !== undefined
+            ? String(item.qty_remaining)
+            : "",
+        }));
+        setFoods(data);
+        setIsClosed(isClosedFlag);
+        setExistingDeliveryId(deliveryId);
+        setEditDeliveryDate(date);
+      } else {
+        setFoods([]);
+        setIsClosed(false);
+        setExistingDeliveryId(null);
+        setEditDeliveryDate(date);
+      }
     } catch {
       showToast("Failed to load delivery records", "error");
     } finally {
@@ -80,7 +100,10 @@ export default function Closing() {
 
     setSaving(true);
     try {
+      const finalDate = editDeliveryDate;
       await api.put("/deliveries/closing", {
+        delivery_id: existingDeliveryId,
+        delivery_date: finalDate,
         items: foods.map(food => ({
           id: food.id,
           qty_delivered: food.qty_delivered,
@@ -88,8 +111,14 @@ export default function Closing() {
           vendor_price: Number(food.vendor_price),
         }))
       });
-      showToast("✅ Daily closing saved successfully!", "success");
-      loadClosing(vendorId, deliveryDate);
+      showToast(isClosed ? "✅ Daily closing updated successfully!" : "✅ Daily closing saved successfully!", "success");
+      
+      if (deliveryDate !== finalDate) {
+        setDeliveryDate(finalDate);
+      }
+      
+      await loadVendors();
+      await loadClosing(vendorId, finalDate);
     } catch {
       showToast("Failed to save closing records", "error");
     } finally {
@@ -120,9 +149,10 @@ export default function Closing() {
             style={{ borderRadius: "8px", fontWeight: "600" }}
             value={deliveryDate}
             onChange={e => {
-              setDeliveryDate(e.target.value);
+              const newDate = e.target.value;
+              setDeliveryDate(newDate);
               setFoods([]);
-              if (selectedVendor) loadClosing(vendorId, e.target.value);
+              if (selectedVendor) loadClosing(vendorId, newDate);
             }}
           />
         </div>
@@ -168,28 +198,72 @@ export default function Closing() {
                 {filteredVendors.length === 0 ? (
                   <div className="text-center text-muted py-3 small">No vendors found</div>
                 ) : (
-                  filteredVendors.map((v, idx) => (
-                    <button
-                      key={v.id}
-                      className="btn w-100 text-start px-3 py-2 border-0 border-bottom shadow-none"
-                      style={{
-                        background: selectedVendor?.id === v.id ? "var(--accent-bg)" : "var(--bg)",
-                        color: "var(--text-h)",
-                        borderRadius: 0,
-                      }}
-                      onClick={() => selectVendor(v)}
-                    >
-                      <span className="text-muted me-2 small">{idx + 1}.</span>
-                      <span className="fw-medium">{v.vendor_name}</span>
-                      {v.phone && <span className="text-muted small ms-2">{v.phone}</span>}
-                    </button>
-                  ))
+                  filteredVendors.map((v, idx) => {
+                    const hasDelivery = v.delivery_id !== null && v.delivery_id !== undefined;
+                    const isClosedFlag = v.is_closed === 1;
+                    return (
+                      <button
+                        key={v.id}
+                        className="btn w-100 text-start px-3 py-2 border-0 border-bottom shadow-none d-flex justify-content-between align-items-center"
+                        style={{
+                          background: selectedVendor?.id === v.id ? "var(--accent-bg)" : "var(--bg)",
+                          color: "var(--text-h)",
+                          borderRadius: 0,
+                        }}
+                        onClick={() => selectVendor(v)}
+                      >
+                        <div>
+                          <span className="text-muted me-2 small">{idx + 1}.</span>
+                          <span className="fw-medium">{v.vendor_name}</span>
+                          {v.phone && <span className="text-muted small ms-2">{v.phone}</span>}
+                        </div>
+                        <div>
+                          {hasDelivery ? (
+                            isClosedFlag ? (
+                              <span className="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 small">
+                                <i className="bi bi-check-circle me-1"></i>Closed
+                              </span>
+                            ) : (
+                              <span className="badge bg-info-subtle text-info border border-info-subtle py-1 px-2 small">
+                                <i className="bi bi-truck me-1"></i>Delivered
+                              </span>
+                            )
+                          ) : (
+                            <span className="badge bg-light text-muted border border-light-subtle py-1 px-2 small">
+                              Empty
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Optional: Move Date Section if editing */}
+      {existingDeliveryId && (
+        <div className="card shadow-sm border border-warning-subtle mb-3" style={{ borderRadius: "8px", background: "#fffdf5" }}>
+          <div className="card-body">
+            <label className="form-label small fw-semibold text-warning text-uppercase d-flex align-items-center gap-1">
+              <i className="bi bi-calendar2-range"></i> Move Delivery & Closing Date
+            </label>
+            <input
+              type="date"
+              className="form-control"
+              style={{ borderRadius: "8px", fontWeight: "600" }}
+              value={editDeliveryDate}
+              onChange={(e) => setEditDeliveryDate(e.target.value)}
+            />
+            <div className="form-text text-muted small mt-1">
+              Change this if you want to shift this record to a different date.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Step 3: Food Items - Enter Baki */}
       {loading ? (
@@ -205,6 +279,18 @@ export default function Closing() {
         </div>
       ) : foods.length > 0 ? (
         <>
+          {isClosed && (
+            <div
+              className="d-flex align-items-center gap-2 p-3 mb-3 rounded border"
+              style={{ background: "#edfdf1", borderColor: "#c6f6d5", color: "#1c5c30" }}
+            >
+              <i className="bi bi-check-circle-fill text-success fs-5"></i>
+              <div className="small">
+                <strong>Closed Mode:</strong> Closing leftovers have already been logged for this vendor on this date. Saving will update the leftovers.
+              </div>
+            </div>
+          )}
+
           {/* Info banner */}
           <div
             className="d-flex align-items-center gap-2 p-3 mb-3 rounded"
@@ -322,6 +408,8 @@ export default function Closing() {
           >
             {saving ? (
               <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</>
+            ) : isClosed ? (
+              <><i className="bi bi-check-circle me-2"></i>Update Closing</>
             ) : (
               <><i className="bi bi-check-circle me-2"></i>Save Closing</>
             )}

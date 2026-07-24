@@ -89,9 +89,21 @@ async function initDb() {
         id INT PRIMARY KEY AUTO_INCREMENT,
         vendor_id INT NOT NULL,
         delivery_date VARCHAR(50) NOT NULL,
+        is_closed TINYINT DEFAULT 0,
         FOREIGN KEY (vendor_id) REFERENCES vendors (id) ON DELETE CASCADE
       )
     `);
+
+    // Migrate existing deliveries table to add is_closed column if it's missing
+    try {
+      await promisePool.query("ALTER TABLE deliveries ADD COLUMN is_closed TINYINT DEFAULT 0");
+      console.log("ℹ️ Added 'is_closed' column to deliveries table");
+    } catch (err) {
+      // Safe to ignore if column already exists (ER_DUP_FIELDNAME / 1060)
+      if (err.code !== "ER_DUP_FIELDNAME" && err.errno !== 1060) {
+        console.error("⚠️ Error altering deliveries table:", err.message);
+      }
+    }
 
     // 4. Delivery Items
     await promisePool.query(`

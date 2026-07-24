@@ -16,13 +16,18 @@ export default function Delivery() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // States for viewing/editing existing delivery logs
+  const [isEditing, setIsEditing] = useState(false);
+  const [existingDeliveryId, setExistingDeliveryId] = useState(null);
+  const [editDeliveryDate, setEditDeliveryDate] = useState("");
+
   useEffect(() => {
     loadVendors();
-  }, []);
+  }, [deliveryDate]);
 
   const loadVendors = async () => {
     try {
-      const res = await api.get("/deliveries/vendors");
+      const res = await api.get(`/deliveries/vendors?date=${deliveryDate}`);
       setVendors(res.data);
     } catch (err) {
       console.error(err);
@@ -35,26 +40,48 @@ export default function Delivery() {
     setVendorId(vendor.id);
     setVendorSearch("");
     setShowVendorPicker(false);
-    await loadFoods(vendor.id);
+    await loadExistingDelivery(vendor.id, deliveryDate);
   };
 
-  const loadFoods = async (id) => {
-    if (!id) {
-      setFoods([]);
-      return;
+  const handleDateChange = async (newDate) => {
+    setDeliveryDate(newDate);
+    if (vendorId) {
+      await loadExistingDelivery(vendorId, newDate);
     }
+  };
 
+  const loadExistingDelivery = async (id, date) => {
+    if (!id || !date) return;
     setLoading(true);
     try {
-      const res = await api.get(`/deliveries/foods/${id}`);
-      const data = res.data.map(food => ({
-        ...food,
-        qty: ""
-      }));
-      setFoods(data);
+      const res = await api.get(`/deliveries/today/${id}/${date}`);
+      if (res.data && res.data.length > 0) {
+        const existingItems = res.data;
+        const deliveryId = existingItems[0].delivery_id;
+
+        // Fetch registered foods for this vendor to match and allow adding foods not initially in this delivery log
+        const foodsRes = await api.get(`/deliveries/foods/${id}`);
+        const merged = foodsRes.data.map(food => {
+          const match = existingItems.find(item => item.food_id === food.id);
+          return {
+            ...food,
+            qty: match ? String(match.qty_delivered) : ""
+          };
+        });
+        setFoods(merged);
+        setIsEditing(true);
+        setExistingDeliveryId(deliveryId);
+        setEditDeliveryDate(date);
+      } else {
+        const foodsRes = await api.get(`/deliveries/foods/${id}`);
+        setFoods(foodsRes.data.map(food => ({ ...food, qty: "" })));
+        setIsEditing(false);
+        setExistingDeliveryId(null);
+        setEditDeliveryDate(date);
+      }
     } catch (err) {
       console.error(err);
-      showToast("Failed to load vendor foods list", "error");
+      showToast("Failed to load delivery details", "error");
     } finally {
       setLoading(false);
     }
@@ -86,15 +113,22 @@ export default function Delivery() {
 
     setSaving(true);
     try {
+      const finalDate = isEditing ? editDeliveryDate : deliveryDate;
       await api.post("/deliveries", {
+        delivery_id: existingDeliveryId,
         vendor_id: vendorId,
-        delivery_date: deliveryDate,
+        delivery_date: finalDate,
         items
       });
-      showToast("✅ Delivery logged successfully!", "success");
-      // Clear inputs
-      const cleared = foods.map(f => ({ ...f, qty: "" }));
-      setFoods(cleared);
+      
+      showToast(isEditing ? "✅ Delivery updated successfully!" : "✅ Delivery logged successfully!", "success");
+      
+      if (deliveryDate !== finalDate) {
+        setDeliveryDate(finalDate);
+      }
+      
+      await loadVendors();
+      await loadExistingDelivery(vendorId, finalDate);
     } catch (err) {
       console.error(err);
       showToast("Failed to save delivery records", "error");
@@ -127,7 +161,7 @@ export default function Delivery() {
             className="form-control form-control-lg"
             style={{ borderRadius: "8px", fontWeight: "600" }}
             value={deliveryDate}
-            onChange={(e) => setDeliveryDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
           />
         </div>
       </div>
@@ -172,28 +206,72 @@ export default function Delivery() {
                 {filteredVendors.length === 0 ? (
                   <div className="text-center text-muted py-3 small">No vendors found</div>
                 ) : (
-                  filteredVendors.map((v, idx) => (
-                    <button
-                      key={v.id}
-                      className="btn w-100 text-start px-3 py-2 border-0 border-bottom shadow-none"
-                      style={{
-                        background: selectedVendor?.id === v.id ? "var(--accent-bg)" : "var(--bg)",
-                        color: "var(--text-h)",
-                        borderRadius: 0,
-                      }}
-                      onClick={() => selectVendor(v)}
-                    >
-                      <span className="text-muted me-2 small">{idx + 1}.</span>
-                      <span className="fw-medium">{v.vendor_name}</span>
-                      {v.phone && <span className="text-muted small ms-2">{v.phone}</span>}
-                    </button>
-                  ))
+                  filteredVendors.map((v, idx) => {
+                    const hasDelivery = v.delivery_id !== null && v.delivery_id !== undefined;
+                    const isClosed = v.is_closed === 1;
+                    return (
+                      <button
+                        key={v.id}
+                        className="btn w-100 text-start px-3 py-2 border-0 border-bottom shadow-none d-flex justify-content-between align-items-center"
+                        style={{
+                          background: selectedVendor?.id === v.id ? "var(--accent-bg)" : "var(--bg)",
+                          color: "var(--text-h)",
+                          borderRadius: 0,
+                        }}
+                        onClick={() => selectVendor(v)}
+                      >
+                        <div>
+                          <span className="text-muted me-2 small">{idx + 1}.</span>
+                          <span className="fw-medium">{v.vendor_name}</span>
+                          {v.phone && <span className="text-muted small ms-2">{v.phone}</span>}
+                        </div>
+                        <div>
+                          {hasDelivery ? (
+                            isClosed ? (
+                              <span className="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 small">
+                                <i className="bi bi-check-circle me-1"></i>Closed
+                              </span>
+                            ) : (
+                              <span className="badge bg-info-subtle text-info border border-info-subtle py-1 px-2 small">
+                                <i className="bi bi-truck me-1"></i>Delivered
+                              </span>
+                            )
+                          ) : (
+                            <span className="badge bg-light text-muted border border-light-subtle py-1 px-2 small">
+                              Empty
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Optional: Move Date Section if editing */}
+      {isEditing && (
+        <div className="card shadow-sm border border-warning-subtle mb-3" style={{ borderRadius: "8px", background: "#fffdf5" }}>
+          <div className="card-body">
+            <label className="form-label small fw-semibold text-warning text-uppercase d-flex align-items-center gap-1">
+              <i className="bi bi-calendar2-range"></i> Move Delivery Date
+            </label>
+            <input
+              type="date"
+              className="form-control"
+              style={{ borderRadius: "8px", fontWeight: "600" }}
+              value={editDeliveryDate}
+              onChange={(e) => setEditDeliveryDate(e.target.value)}
+            />
+            <div className="form-text text-muted small mt-1">
+              Change this if you want to shift this delivery record to a different date.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Step 3: Enter quantities */}
       {loading ? (
@@ -211,6 +289,18 @@ export default function Delivery() {
         </div>
       ) : foods.length > 0 ? (
         <>
+          {isEditing && (
+            <div
+              className="d-flex align-items-center gap-2 p-3 mb-3 rounded border"
+              style={{ background: "#fffdf5", borderColor: "#fde68a", color: "#78350f" }}
+            >
+              <i className="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+              <div className="small">
+                <strong>Edit Mode:</strong> A delivery has already been logged. Saving will update the quantities. If this delivery was already closed, the closing status will be reset.
+              </div>
+            </div>
+          )}
+
           <div
             className="d-flex align-items-center gap-2 p-3 mb-3 rounded"
             style={{ background: "var(--accent-bg)", border: "1px solid var(--accent-border)" }}
@@ -280,6 +370,8 @@ export default function Delivery() {
           >
             {saving ? (
               <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</>
+            ) : isEditing ? (
+              <><i className="bi bi-save me-2"></i>Update Delivery Log</>
             ) : (
               <><i className="bi bi-save me-2"></i>Save Delivery Log</>
             )}
