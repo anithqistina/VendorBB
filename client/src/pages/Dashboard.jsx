@@ -278,7 +278,11 @@ export default function Dashboard() {
       <div className="row g-3">
         {/* Latest Deliveries */}
         <div className="col-12 col-md-6">
-          <div className="card shadow-sm border border-light-subtle h-100" style={{ borderRadius: "8px" }}>
+          <div
+            className="card shadow-sm border border-light-subtle h-100 card-kpi"
+            style={{ borderRadius: "8px", cursor: "pointer" }}
+            onClick={() => navigate("/delivery")}
+          >
             <div className="card-body">
               <h6 className="card-title fw-bold text-muted text-uppercase small mb-3">
                 <i className="bi bi-clock-history me-1 text-success"></i> Recent Deliveries
@@ -306,7 +310,11 @@ export default function Dashboard() {
 
         {/* Latest Closings */}
         <div className="col-12 col-md-6">
-          <div className="card shadow-sm border border-light-subtle h-100" style={{ borderRadius: "8px" }}>
+          <div
+            className="card shadow-sm border border-light-subtle h-100 card-kpi"
+            style={{ borderRadius: "8px", cursor: "pointer" }}
+            onClick={() => navigate("/closing")}
+          >
             <div className="card-body">
               <h6 className="card-title fw-bold text-muted text-uppercase small mb-3">
                 <i className="bi bi-check2-circle me-1 text-success"></i> Recent Closings

@@ -42,7 +42,7 @@ exports.getWeeklySummary = (req, res) => {
           const paidDetails = isPaid ? paidResult[0] : null;
 
           const totalPayment = foodsResult.reduce(
-            (sum, item) => sum + (item.total_payment || 0),
+            (sum, item) => sum + (Number(item.total_payment) || 0),
             0
           );
 
