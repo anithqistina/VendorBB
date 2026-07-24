@@ -113,9 +113,9 @@ export default function Reports() {
 
   const totalCalculated = () => {
     if (reportType === "daily" || reportType === "weekly") {
-      return data.reduce((sum, item) => sum + (item.payment || item.total_payment || 0), 0);
+      return data.reduce((sum, item) => sum + (Number(item.payment || item.total_payment) || 0), 0);
     }
-    return data.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
+    return data.reduce((sum, item) => sum + (Number(item.total_revenue) || 0), 0);
   };
 
   return (
